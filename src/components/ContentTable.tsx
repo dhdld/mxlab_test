@@ -1,71 +1,22 @@
-import { useState, useEffect } from 'react'
-import { getProducts, getProductById } from '../services/api'
-import type { ProductItem, ProductMeta, ProductDetail } from '../services/api'
+import type { ProductItem, ProductMeta } from '../services/api'
 
 interface ContentTableProps {
+  products: ProductItem[]
+  meta: ProductMeta | null
+  loading: boolean
+  error: string | null
+  currentPage: number
+  onRefresh: () => void
   onEdit?: (productId: string) => void
 }
 
-function ContentTable({ onEdit }: ContentTableProps) {
-  const [products, setProducts] = useState<ProductItem[]>([])
-  const [meta, setMeta] = useState<ProductMeta | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchProducts()
-  }, [])
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true)
-      
-      // 1. 전체 목록 가져오기
-      const response = await getProducts(1, 10)
-      console.log(response)
-      
-      if (response.success) {
-        setMeta(response.data.meta)
-        
-        // 2. 각 제품의 상세 정보 가져오기
-        const detailedProducts = await Promise.all(
-          response.data.items.map(async (product) => {
-            try {
-              const detailData: ProductDetail = await getProductById(product.id)
-              return {
-                ...product,
-                phoneNumber: detailData.phoneNumber,
-                isActive: detailData.isActive
-              }
-            } catch (error) {
-              console.error(`제품 ${product.id} 상세 정보 로드 실패:`, error)
-              return {
-                ...product,
-                phoneNumber: '010-1234-5678', // 기본값
-                isActive: true // 기본값
-              }
-            }
-          })
-        )
-        
-        setProducts(detailedProducts)
-      } else {
-        setError('데이터를 불러오는데 실패했습니다.')
-      }
-    } catch (err) {
-      setError('API 호출 중 오류가 발생했습니다.')
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
+function ContentTable({ products, meta, loading, error, currentPage, onRefresh, onEdit }: ContentTableProps) {
+  const itemsPerPage = 20
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '미정'
     return new Date(dateString).toISOString().split('T')[0]
   }
-
-
 
   if (loading) {
     return (
@@ -80,7 +31,7 @@ function ContentTable({ onEdit }: ContentTableProps) {
       <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
         <div className="text-red-500">{error}</div>
         <button 
-          onClick={fetchProducts}
+          onClick={onRefresh}
           className="mt-4 px-4 py-2 bg-[#AB43CE] text-white rounded-md hover:bg-purple-700"
         >
           다시 시도
@@ -111,7 +62,7 @@ function ContentTable({ onEdit }: ContentTableProps) {
         <tbody>
           {products.map((product, index) => (
             <tr key={product.id} className="border-b border-gray-200 h-[140px]">
-              <td className="p-4 text-xs border-r border-gray-200 align-middle">{meta?.totalItems ? meta.totalItems - index : index + 1}</td>
+              <td className="p-4 text-xs border-r border-gray-200 align-middle">{meta?.totalItems ? meta.totalItems - ((currentPage - 1) * itemsPerPage + index) : index + 1}</td>
               <td className="p-4 text-xs border-r border-gray-200 align-middle">
                 <div className="flex items-center justify-center">
                                            {product.logoImageUrl ? (

@@ -1,26 +1,63 @@
 import { useState, useEffect } from 'react'
-import { getProducts } from '../services/api'
-import type { ProductMeta } from '../services/api'
+import { getProducts, getProductById } from '../services/api'
+import type { ProductMeta, ProductItem, ProductDetail } from '../services/api'
 import ContentTable from './ContentTable'
 import ContentForm from './ContentForm'
+import Pagination from './Pagination'
 
 function ContentManagement() {
   const [meta, setMeta] = useState<ProductMeta | null>(null)
+  const [products, setProducts] = useState<ProductItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [currentView, setCurrentView] = useState<'list' | 'form' | 'edit'>('list')
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    fetchMeta()
-  }, [])
+    fetchProducts()
+  }, [currentPage])
 
-  const fetchMeta = async () => {
+  const fetchProducts = async () => {
     try {
-      const response = await getProducts(1, 10)
+      setLoading(true)
+      const response = await getProducts(currentPage, 20)
+      console.log('페이지네이션 데이터:', response.data.meta) // 디버깅용
+      
       if (response.success) {
         setMeta(response.data.meta)
+        
+        // 각 제품의 상세 정보 가져오기
+        const detailedProducts = await Promise.all(
+          response.data.items.map(async (product) => {
+            try {
+              const detailData: ProductDetail = await getProductById(product.id)
+              return {
+                ...product,
+                phoneNumber: detailData.phoneNumber,
+                isActive: detailData.isActive
+              }
+            } catch (error) {
+              console.error(`제품 ${product.id} 상세 정보 로드 실패:`, error)
+              return {
+                ...product,
+                phoneNumber: '010-1234-5678',
+                isActive: true
+              }
+            }
+          })
+        )
+        
+        setProducts(detailedProducts)
+        setError(null)
+      } else {
+        setError('데이터를 불러오는데 실패했습니다.')
       }
-    } catch (error) {
-      console.error('메타 데이터 로드 실패:', error)
+    } catch (err) {
+      setError('API 호출 중 오류가 발생했습니다.')
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -61,13 +98,28 @@ function ContentManagement() {
         </button>
       </div>
 
-      <ContentTable 
-        onEdit={(productId) => {
-          setSelectedProductId(productId)
-          setCurrentView('edit')
-        }}
-      />
-    </main>
+                <ContentTable
+            products={products}
+            meta={meta}
+            loading={loading}
+            error={error}
+            currentPage={currentPage}
+            onRefresh={fetchProducts}
+            onEdit={(productId) => {
+              setSelectedProductId(productId)
+              setCurrentView('edit')
+            }}
+          />
+          
+          {/* 페이지네이션 */}
+          {meta && (
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={meta.totalPages}
+              onPageChange={setCurrentPage}
+            />
+          )}
+        </main>
   )
 }
 
