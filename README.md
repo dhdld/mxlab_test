@@ -3,8 +3,8 @@
 ### 1. 저장소 클론
 
 ```bash
-git clone <repository-url>
-cd mxlab
+git clone https://github.com/dhdld/mxlab_test
+cd mxlab_test
 ```
 
 ### 2. 의존성 설치
