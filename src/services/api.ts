@@ -13,6 +13,12 @@ const api = axios.create({
 })
 
 // 데이터 타입 정의
+export interface ImageObject {
+  key: string
+  url: string
+}
+
+// getProducts용 (URL만)
 export interface ProductItem {
   id: string
   title: string
@@ -25,6 +31,21 @@ export interface ProductItem {
   productImageUrl: string
   phoneNumber?: string
   isActive?: boolean
+}
+
+// getProductById용 (객체 형태)
+export interface ProductDetail {
+  id: string
+  title: string
+  companyName: string
+  content: string
+  startDate: string | null
+  endDate: string | null
+  postingPeriodType: string
+  logoImage: ImageObject
+  productImage: ImageObject
+  phoneNumber: string
+  isActive: boolean
 }
 
 export interface ProductMeta {
@@ -66,7 +87,7 @@ export interface ImageUploadResponse {
 
 export interface CreateProductResponse {
   success: boolean
-  data: ProductItem
+  data: ProductDetail
 }
 
 // 전체 제품 데이터 가져오기
@@ -81,7 +102,7 @@ export const getProducts = async (page: number = 1, limit: number = 10): Promise
 }
 
 // 개별 제품 상세 정보 가져오기
-export const getProductById = async (id: string): Promise<ProductItem> => {
+export const getProductById = async (id: string): Promise<ProductDetail> => {
   try {
     const response = await api.get(`/products/${id}`)
     return response.data.data
@@ -118,6 +139,29 @@ export const createProduct = async (productData: CreateProductRequest): Promise<
     return response.data
   } catch (error) {
     console.error('제품 생성 실패:', error)
+    throw error
+  }
+}
+
+// 제품 수정 API
+export const updateProduct = async (id: string, productData: CreateProductRequest): Promise<CreateProductResponse> => {
+  try {
+    // PATCH 대신 PUT 사용 (CORS 문제 해결 시도)
+    const response = await api.patch(`/products/${id}`, productData)
+    return response.data
+  } catch (error) {
+    console.error('제품 수정 실패:', error)
+    throw error
+  }
+}
+
+// 제품 삭제 API
+export const deleteProduct = async (id: string): Promise<{ success: boolean }> => {
+  try {
+    const response = await api.delete(`/products/${id}`)
+    return response.data
+  } catch (error) {
+    console.error('제품 삭제 실패:', error)
     throw error
   }
 }

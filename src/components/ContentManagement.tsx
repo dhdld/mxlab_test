@@ -6,7 +6,8 @@ import ContentForm from './ContentForm'
 
 function ContentManagement() {
   const [meta, setMeta] = useState<ProductMeta | null>(null)
-  const [currentView, setCurrentView] = useState<'list' | 'form'>('list')
+  const [currentView, setCurrentView] = useState<'list' | 'form' | 'edit'>('list')
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchMeta()
@@ -28,6 +29,19 @@ function ContentManagement() {
     return <ContentForm onClose={() => setCurrentView('list')} />
   }
 
+  if (currentView === 'edit' && selectedProductId) {
+    return (
+      <ContentForm 
+        onClose={() => {
+          setCurrentView('list')
+          setSelectedProductId(null)
+        }}
+        editMode={true}
+        productId={selectedProductId}
+      />
+    )
+  }
+
   return (
     <main className="flex-1 p-[40px]">
       <div className="flex flex-col mb-[20px]">
@@ -47,7 +61,12 @@ function ContentManagement() {
         </button>
       </div>
 
-      <ContentTable />
+      <ContentTable 
+        onEdit={(productId) => {
+          setSelectedProductId(productId)
+          setCurrentView('edit')
+        }}
+      />
     </main>
   )
 }

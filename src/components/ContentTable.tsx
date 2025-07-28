@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react'
 import { getProducts, getProductById } from '../services/api'
-import type { ProductItem, ProductMeta } from '../services/api'
+import type { ProductItem, ProductMeta, ProductDetail } from '../services/api'
 
-function ContentTable() {
+interface ContentTableProps {
+  onEdit?: (productId: string) => void
+}
+
+function ContentTable({ onEdit }: ContentTableProps) {
   const [products, setProducts] = useState<ProductItem[]>([])
   const [meta, setMeta] = useState<ProductMeta | null>(null)
   const [loading, setLoading] = useState(true)
@@ -18,6 +22,7 @@ function ContentTable() {
       
       // 1. 전체 목록 가져오기
       const response = await getProducts(1, 10)
+      console.log(response)
       
       if (response.success) {
         setMeta(response.data.meta)
@@ -26,7 +31,7 @@ function ContentTable() {
         const detailedProducts = await Promise.all(
           response.data.items.map(async (product) => {
             try {
-              const detailData = await getProductById(product.id)
+              const detailData: ProductDetail = await getProductById(product.id)
               return {
                 ...product,
                 phoneNumber: detailData.phoneNumber,
@@ -57,7 +62,7 @@ function ContentTable() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '미정'
-    return new Date(dateString).toLocaleDateString('ko-KR')
+    return new Date(dateString).toISOString().split('T')[0]
   }
 
 
@@ -109,11 +114,11 @@ function ContentTable() {
               <td className="p-4 text-xs border-r border-gray-200 align-middle">{meta?.totalItems ? meta.totalItems - index : index + 1}</td>
               <td className="p-4 text-xs border-r border-gray-200 align-middle">
                 <div className="flex items-center justify-center">
-                  {product.logoImageUrl ? (
-                    <img 
-                      src={product.logoImageUrl} 
+                                           {product.logoImageUrl ? (
+                           <img
+                             src={product.logoImageUrl} 
                       alt="로고" 
-                      className="w-8 h-8 rounded-md object-cover"
+                      className="w-[40px] h-[40px] rounded-md object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = '/logo.svg';
@@ -130,9 +135,9 @@ function ContentTable() {
                <td className="p-4 text-xs border-r border-gray-200 align-middle">{product.phoneNumber || '010-1234-5678'}</td>
               <td className="p-4 text-xs border-r border-gray-200 align-middle">
                 <div className="flex items-center justify-center">
-                  {product.productImageUrl ? (
-                    <img 
-                      src={product.productImageUrl} 
+                                           {product.productImageUrl ? (
+                           <img
+                             src={product.productImageUrl} 
                       alt="제품" 
                       className="w-[120px] h-[120px] rounded-md object-cover"
                       onError={(e) => {
@@ -160,11 +165,11 @@ function ContentTable() {
               <td className="p-4 text-xs text-gray-500 border-r border-gray-200 align-middle">
                 {formatDate(product.startDate)} ~ {formatDate(product.endDate)}
               </td>
-                  <td className="p-4 text-xs align-middle">
-                  <button>
-                    <img src="/more.svg" alt="상세 관리" className="w-[35px] h-[35px]" />
-                  </button>
-                </td>
+                                       <td className="p-4 text-xs align-middle">
+                       <button onClick={() => onEdit?.(product.id)}>
+                         <img src="/more.svg" alt="상세 관리" className="w-[35px] h-[35px]" />
+                       </button>
+                     </td>
             </tr>
           ))}
         </tbody>
