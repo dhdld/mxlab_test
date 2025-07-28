@@ -236,9 +236,9 @@ function ContentForm({ onClose, editMode = false, productId }: ContentFormProps)
             image={logoImage}
             existingImageUrl={existingProduct?.logoImage?.url}
             onImageChange={setLogoImage}
-            width="w-20"
-            height="h-20"
             required={!editMode}
+            width="w-50"
+            height="h-50"
           />
 
                         {/* 업체명 */}
@@ -270,8 +270,8 @@ function ContentForm({ onClose, editMode = false, productId }: ContentFormProps)
             image={cardImage}
             existingImageUrl={existingProduct?.productImage?.url}
             onImageChange={setCardImage}
-            width="w-32"
-            height="h-20"
+            width="w-50"
+            height="h-50"
             required={!editMode}
           />
 
